@@ -133,6 +133,45 @@ const publicJob = (j) => ({
   error: j.error,
   filename: j.filename,
 });
+// yt-dlp's raw errors are written for people running it in a terminal:
+// they cite command-line flags and link to wiki pages, which is noise to
+// someone using this as a website. Translate the ones users actually hit
+// into something actionable, and pass anything unrecognized through.
+const errorTranslations = [
+  [
+    /not a bot|sign in to confirm/i,
+    'This source is blocking downloads from this server right now. Other videos may still work; try again later or try a different link.',
+  ],
+  [
+    /only works when logged-in|cookies|authentication/i,
+    'This source requires a signed-in session to download, which this server does not have.',
+  ],
+  [
+    /private video|members-only|join this channel/i,
+    'This video is private or restricted to members, so it cannot be downloaded.',
+  ],
+  [
+    /video unavailable|has been removed|no longer available|404/i,
+    'This video is unavailable. It may have been removed, or the link may be wrong.',
+  ],
+  [
+    /age|confirm your age/i,
+    'This video is age-restricted and cannot be downloaded without a signed-in account.',
+  ],
+  [
+    /geo|not available in your country|blocked it in your country/i,
+    'This video is not available in the region where this server is located.',
+  ],
+  [
+    /live event|is live/i,
+    'Live streams cannot be downloaded. Try again once the stream has ended.',
+  ],
+];
+function friendlyError(raw) {
+  for (const [pattern, message] of errorTranslations)
+    if (pattern.test(raw)) return message;
+  return raw;
+}
 function run(command, args, { timeout = 90000, onOutput, jobId } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -184,14 +223,16 @@ function run(command, args, { timeout = 90000, onOutput, jobId } = {}) {
         ? resolve({ output, error })
         : reject(
             new Error(
-              error
-                .replace(/\x1b\[[0-9;]*m/g, '')
-                .split('\n')
-                .filter((l) => l.startsWith('ERROR:'))
-                .join(' ')
-                .slice(0, 600) ||
-                error.slice(-400) ||
-                'Media processing stopped.',
+              friendlyError(
+                error
+                  .replace(/\x1b\[[0-9;]*m/g, '')
+                  .split('\n')
+                  .filter((l) => l.startsWith('ERROR:'))
+                  .join(' ')
+                  .slice(0, 600) ||
+                  error.slice(-400) ||
+                  'Media processing stopped.',
+              ),
             ),
           );
     });
