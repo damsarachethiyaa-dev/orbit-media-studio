@@ -69,6 +69,15 @@ The Sites deployment hosts the web interface privately. Cloudflare Workers canno
 
 Open Preferences to change the engine URL/key. Install using the browser's Install app / Add to Home Screen command. The offline screen explains how to reconnect; media processing requires a connected engine. This is a PWA, not a native Android/iOS binary.
 
+To ship a deployment that connects to your hosted engine automatically (so visitors don't have to open Preferences and type anything in), create a git-ignored `.env.local` at the repo root before building:
+
+```
+VITE_ORBIT_ENGINE_URL=https://your-engine-domain
+VITE_ORBIT_ENGINE_KEY=your-engine-key
+```
+
+This bakes the URL and key into the built site as its default connection. Note that anything shipped to the browser is visible to anyone who opens dev tools — this only keeps the key out of source control and stops it from being hit directly by people who don't have the site's URL, it is not real per-user access control. Without `.env.local`, the site defaults to `http://127.0.0.1:4318` with no key, for local development against your own machine's engine.
+
 ## Host the processing engine
 
 Use a server/container capable of running FFmpeg, with sufficient disk space and memory. `server/Dockerfile` is included as a deployment starting point. Terminate HTTPS in a reverse proxy. Set:

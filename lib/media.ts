@@ -30,9 +30,14 @@ export type Job = {
   error?: string;
 };
 export type Connection = { url: string; key: string };
+// Points at the hosted engine by default so visitors don't have to configure
+// anything. Anyone can still switch to their own engine in Preferences.
+// The URL/key come from build-time env vars (set in `.env.local`, which is
+// git-ignored) rather than being hardcoded here, so the deployment's engine
+// key never lives in the repository's source or history.
 export const connectionDefault: Connection = {
-  url: 'http://127.0.0.1:4318',
-  key: '',
+  url: import.meta.env.VITE_ORBIT_ENGINE_URL || 'http://127.0.0.1:4318',
+  key: import.meta.env.VITE_ORBIT_ENGINE_KEY || '',
 };
 export async function api<T>(
   connection: Connection,
