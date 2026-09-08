@@ -53,6 +53,7 @@ import {
   connectionDefault,
   detectSource,
   unsupportedSource,
+  saveJob,
   type Connection,
   type Job,
   type MediaInfo,
@@ -89,9 +90,14 @@ export default function Home() {
   const [settingsError, setSettingsError] = useState('');
   const [checking, setChecking] = useState(false);
   const [autoAnalyze, setAutoAnalyze] = useState(true);
+  const [autoSave, setAutoSave] = useState(true);
   const [motion, setMotion] = useState(true);
   const [notice, setNotice] = useState('');
   const [loaded, setLoaded] = useState(false);
+  // Jobs seen mid-flight this session. Only these auto-save on completion,
+  // so opening the page with a finished library doesn't dump every old
+  // download into the browser at once.
+  const awaitingSave = useRef<Set<string>>(new Set());
   const suppressAuto = useRef(false);
   const currentLink = useRef(link);
   currentLink.current = link;
@@ -138,6 +144,7 @@ export default function Home() {
         setConnection(c);
         setDraft(c);
         setAutoAnalyze(stored.autoAnalyze !== false);
+        setAutoSave(stored.autoSave !== false);
         setMotion(stored.motion !== false);
       }
     } catch {}
@@ -151,11 +158,16 @@ export default function Home() {
       try {
         localStorage.setItem(
           'orbit-preferences',
-          JSON.stringify({ url: connection.url, autoAnalyze, motion }),
+          JSON.stringify({
+            url: connection.url,
+            autoAnalyze,
+            autoSave,
+            motion,
+          }),
         );
         sessionStorage.setItem('orbit-key', connection.key);
       } catch {}
-  }, [motion, autoAnalyze, connection, loaded]);
+  }, [motion, autoAnalyze, autoSave, connection, loaded]);
   const refresh = useCallback(async () => {
     try {
       const health = await api<{ ok: boolean }>(connection, '/health', {
@@ -173,6 +185,29 @@ export default function Home() {
     const timer = setInterval(() => void refresh(), activeJobs ? 2000 : 12000);
     return () => clearInterval(timer);
   }, [refresh, activeJobs, loaded]);
+  // Hand a finished file straight to the browser's downloads instead of
+  // making people come back and click save.
+  useEffect(() => {
+    const ready: Job[] = [];
+    for (const job of jobs)
+      if (['queued', 'processing'].includes(job.status))
+        awaitingSave.current.add(job.id);
+      else if (job.status === 'completed' && awaitingSave.current.has(job.id)) {
+        awaitingSave.current.delete(job.id);
+        ready.push(job);
+      }
+    if (!autoSave || !ready.length) return;
+    void (async () => {
+      for (const job of ready) {
+        try {
+          await saveJob(connection, job);
+          setNotice(`Saved “${job.title}” to your device.`);
+        } catch {
+          setNotice('Your file is ready. Open your library to save it.');
+        }
+      }
+    })();
+  }, [jobs, autoSave, connection]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(''), 5000);
@@ -708,6 +743,17 @@ export default function Home() {
                   aria-label="Automatic link analysis"
                   checked={autoAnalyze}
                   onCheckedChange={setAutoAnalyze}
+                />
+              </div>
+              <div className="setting-row">
+                <div>
+                  <strong>Save to device automatically</strong>
+                  <p>Send each file to your downloads as soon as it’s ready.</p>
+                </div>
+                <Switch
+                  aria-label="Save to device automatically"
+                  checked={autoSave}
+                  onCheckedChange={setAutoSave}
                 />
               </div>
               <div className="setting-row">

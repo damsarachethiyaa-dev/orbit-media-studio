@@ -138,7 +138,11 @@ export function bytes(value?: number) {
     ? (value / 1024 ** 3).toFixed(1) + ' GB'
     : (value / 1024 ** 2).toFixed(1) + ' MB';
 }
-export async function saveJob(connection: Connection, job: Job) {
+// `share` opens the device's native share sheet, which on a phone is the
+// only route into the photo gallery -- a web page cannot write there
+// directly. It requires a user gesture, so pass it for taps on Save and
+// leave it off for automatic saves, which fall back to a file download.
+export async function saveJob(connection: Connection, job: Job, share = false) {
   const r = await fetch(
     `${connection.url.replace(/\/$/, '')}/api/jobs/${job.id}/file`,
     {
@@ -149,10 +153,26 @@ export async function saveJob(connection: Connection, job: Job) {
   );
   if (!r.ok) throw new Error('This file is no longer available.');
   const blob = await r.blob();
+  const name = job.filename || 'orbit-download.mp4';
+  if (share && typeof navigator.canShare === 'function') {
+    const file = new File([blob], name, {
+      type: blob.type || 'application/octet-stream',
+    });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: job.title });
+        return;
+      } catch (e) {
+        // Dismissing the sheet is a normal outcome, not a failure.
+        if ((e as Error).name === 'AbortError') return;
+        // Anything else (unsupported target, etc.) falls back to a download.
+      }
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = job.filename || 'orbit-download.mp4';
+  a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

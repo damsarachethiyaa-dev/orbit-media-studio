@@ -209,7 +209,9 @@ export function JobList({
     setSaving(job.id);
     setError('');
     try {
-      await saveJob(connection, job);
+      // A tap on Save is a user gesture, so the share sheet is allowed here:
+      // on phones that's what puts the file into the gallery.
+      await saveJob(connection, job, true);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -270,8 +272,8 @@ export function JobList({
           {job.status === 'completed' && (
             <button
               className="icon-button save-file"
-              title="Save file"
-              aria-label={`Save ${job.title}`}
+              title="Save to your device"
+              aria-label={`Save ${job.title} to your device`}
               onClick={() => save(job)}
               disabled={saving === job.id}
             >

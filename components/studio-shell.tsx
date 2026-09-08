@@ -196,9 +196,6 @@ export function StudioNavigation({
           <CircleHelp />
           <span>Help</span>
         </button>
-        <div className="rail-profile" title="Personal workspace">
-          Y<span />
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
