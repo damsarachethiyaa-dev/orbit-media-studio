@@ -50,7 +50,7 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
       w = 0,
       h = 0;
     let pointer = { x: 0, y: 0 };
-    const stars = Array.from({ length: 66 }, (_, i) => ({
+    const stars = Array.from({ length: 40 }, (_, i) => ({
       x: ((i * 73.71 + 19) % 100) / 100,
       y: ((i * 31.39 + 7) % 100) / 100,
       r: 0.45 + (i % 4) * 0.35,
@@ -59,7 +59,7 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
     function resize() {
       w = innerWidth;
       h = innerHeight;
-      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(devicePixelRatio || 1, 1.25);
       el!.width = w * dpr;
       el!.height = h * dpr;
       el!.style.width = w + 'px';
@@ -88,7 +88,7 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
       }
     }
     function tick(now: number) {
-      if (now - last > 33) {
+      if (now - last > 40) {
         time += Math.min((now - last) / 1000, 0.06);
         last = now;
         draw();

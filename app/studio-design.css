@@ -22,7 +22,7 @@
 }
 .studio-rail [data-slot='sidebar-inner'] {
   background: #111111ef;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(8px);
 }
 .studio-rail .brand {
   height: 112px;
@@ -267,9 +267,7 @@
 }
 .workspace-intro h1 > span {
   background: linear-gradient(105deg, #efefef, #c2c2c2 50%, #c9c9c9);
-  background-size: 170% 100%;
   background-clip: text;
-  animation: title-spectrum 11s ease infinite;
 }
 .workspace-intro p {
   font-size: 14px;
@@ -689,7 +687,7 @@
   border-radius: 14px;
   padding: 22px 20px 18px;
   background: linear-gradient(135deg, #1e1e1e9e, #15151599);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(6px);
 }
 .workflow-title {
   display: flex;
@@ -2063,11 +2061,14 @@ html[data-motion='off'] .studio-tool-card {
   }
 }
 @keyframes orbit-pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor, transparent 55%);
-  }
+  0%,
   100% {
-    box-shadow: 0 0 0 9px color-mix(in srgb, currentColor, transparent 100%);
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.7);
   }
 }
 @keyframes orbit-shimmer {

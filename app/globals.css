@@ -2342,10 +2342,10 @@ html[data-motion='off'] *:after {
 }
 .aurora-light {
   position: absolute;
-  width: 75vw;
-  height: 75vh;
+  width: 50vw;
+  height: 50vh;
   border-radius: 50%;
-  filter: blur(90px);
+  filter: blur(40px);
   opacity: 0.2;
   will-change: transform;
   mix-blend-mode: screen;
@@ -2398,7 +2398,7 @@ html[data-motion='off'] *:after {
 }
 .topbar {
   background: #0b0b0b44;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
   border-color: #3838383d;
 }
 .workspace {
@@ -2411,7 +2411,7 @@ html[data-motion='off'] *:after {
     0 15px 70px #00000033,
     0 0 80px #6d6d6d14,
     inset 0 1px #bebebe12;
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(8px);
 }
 .download-panel:before {
   height: 2px;
@@ -2423,8 +2423,6 @@ html[data-motion='off'] *:after {
     #a6a6a699,
     transparent
   );
-  background-size: 200% 100%;
-  animation: border-flow 7s ease infinite;
 }
 .link-field {
   min-height: 65px;
@@ -2439,9 +2437,7 @@ html[data-motion='off'] *:after {
 }
 .primary-button {
   background: linear-gradient(115deg, #a6a6a6, #cecece 48%, #c2c2c2);
-  background-size: 200% 100%;
   box-shadow: 0 5px 25px #98989829;
-  animation: button-spectrum 8s ease infinite;
   min-height: 43px;
 }
 .primary-button:hover {
@@ -2491,8 +2487,6 @@ html[data-motion='off'] *:after {
     #cdcdcd 62%,
     #c8c8c8 95%
   );
-  background-size: 200%;
-  animation: title-spectrum 12s ease infinite;
 }
 .hero-tutorial-link {
   display: flex;
@@ -3668,7 +3662,7 @@ html[data-motion='off'] *:after {
     padding: 10px;
   }
   .aurora-light {
-    filter: blur(55px);
+    filter: blur(24px);
   }
   .lesson-eyebrow {
     font-size: 10px;
