@@ -404,44 +404,11 @@
   padding: 27px 27px 0;
   border: 1px solid #70707052;
   border-radius: 15px;
-  background: linear-gradient(120deg, #1e1e1eee, #171717f5 65%);
+  background: linear-gradient(120deg, #1e1e1e88, #17171790 65%);
   box-shadow:
     0 22px 65px #00000033,
     inset 0 1px #ffffff05;
   isolation: isolate;
-}
-@property --edge-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-.download-panel:before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  height: auto;
-  border-radius: 15px;
-  padding: 1px;
-  background: conic-gradient(
-    from var(--edge-angle),
-    transparent 10%,
-    #cccccc7a 25%,
-    transparent 36%,
-    transparent 65%,
-    #95959552 78%,
-    transparent 90%
-  );
-  mask:
-    linear-gradient(#ffffff 0 0) content-box,
-    linear-gradient(#ffffff 0 0);
-  mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#ffffff 0 0) content-box,
-    linear-gradient(#ffffff 0 0);
-  -webkit-mask-composite: xor;
-  pointer-events: none;
-  animation: orbit-border 12s linear infinite;
-  z-index: -1;
 }
 .panel-heading {
   gap: 12px;
@@ -1447,11 +1414,6 @@
   color: #818181;
 }
 /* Motion stays concentrated on the media and interactive controls. */
-@keyframes orbit-border {
-  to {
-    --edge-angle: 360deg;
-  }
-}
 @keyframes halo-tide {
   0%,
   100% {

@@ -50,11 +50,12 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
       w = 0,
       h = 0;
     let pointer = { x: 0, y: 0 };
-    const stars = Array.from({ length: 40 }, (_, i) => ({
+    const stars = Array.from({ length: 96 }, (_, i) => ({
       x: ((i * 73.71 + 19) % 100) / 100,
       y: ((i * 31.39 + 7) % 100) / 100,
       r: 0.45 + (i % 4) * 0.35,
       s: 0.12 + (i % 7) * 0.035,
+      cyan: i % 3 === 0,
     }));
     function resize() {
       w = innerWidth;
@@ -69,8 +70,13 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
     }
     function draw() {
       context!.clearRect(0, 0, w, h);
+      // Stars are batched into two paths (one per color) and filled once
+      // each, instead of once per star, so adding more stars costs almost
+      // nothing extra -- the expensive part is the fill() call, not the
+      // per-star position math.
+      const cyanPath = new Path2D();
+      const grayPath = new Path2D();
       for (const [i, star] of stars.entries()) {
-        const alpha = 0.22 + (Math.sin(time * 0.7 + i) * 0.5 + 0.5) * 0.4;
         const x =
           (star.x * w +
             Math.sin(time * star.s + i) * 11 +
@@ -81,11 +87,16 @@ export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
           (((star.y * h - time * star.s * 3 + pointer.y * star.r * 4) % h) +
             h) %
           h;
-        context!.beginPath();
-        context!.arc(x, y, star.r, 0, Math.PI * 2);
-        context!.fillStyle = `rgba(${i % 3 === 0 ? '91,209,222' : '165,184,211'},${alpha})`;
-        context!.fill();
+        const path = star.cyan ? cyanPath : grayPath;
+        path.moveTo(x + star.r, y);
+        path.arc(x, y, star.r, 0, Math.PI * 2);
       }
+      const alphaA = 0.26 + (Math.sin(time * 0.6) * 0.5 + 0.5) * 0.3;
+      const alphaB = 0.22 + (Math.sin(time * 0.6 + 2) * 0.5 + 0.5) * 0.26;
+      context!.fillStyle = `rgba(91,209,222,${alphaA})`;
+      context!.fill(cyanPath);
+      context!.fillStyle = `rgba(165,184,211,${alphaB})`;
+      context!.fill(grayPath);
     }
     function tick(now: number) {
       if (now - last > 40) {
