@@ -1,3 +1,4 @@
 yt-dlp[default]==2026.8.19
 curl_cffi>=0.11
+bgutil-ytdlp-pot-provider
 imageio-ffmpeg==0.6.0
