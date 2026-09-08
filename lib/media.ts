@@ -92,6 +92,11 @@ export function detectSource(value: string) {
     if (match('twitter.com') || match('x.com')) return 'Twitter / X';
     if (match('vimeo.com')) return 'Vimeo';
     if (match('facebook.com') || match('fb.watch')) return 'Facebook';
+    if (match('twitch.tv')) return 'Twitch';
+    if (match('reddit.com') || match('redd.it')) return 'Reddit';
+    if (match('pinterest.com') || match('pin.it')) return 'Pinterest';
+    if (match('soundcloud.com')) return 'SoundCloud';
+    if (match('dailymotion.com') || match('dai.ly')) return 'Dailymotion';
     if (/\.(mp4|webm|mov|m4v|mkv|mp3|m4a|m3u8)$/i.test(url.pathname))
       return 'Direct media';
     return h.replace(/^www\./, '');
@@ -99,16 +104,25 @@ export function detectSource(value: string) {
     return null;
   }
 }
-// Sources that are known to fail from this deployment, so the app can say
-// so immediately instead of sending a request that is certain to fail.
-// YouTube blocks requests originating from datacenter/VPS IP ranges; the
-// only workarounds are an account's cookies or a residential proxy, and
-// this deployment uses neither. Returns null for anything supported.
+// Sources verified to fail from this deployment every time, so the app can
+// say so immediately instead of sending a request that is certain to fail.
+// Each was confirmed by testing against the live engine:
+//   youtube  - blocks datacenter/VPS IP ranges outright
+//   reddit   - same; its session endpoint returns 403 from this IP
+//   vimeo    - now requires a signed-in session for virtually every video
+// Fixing any of these needs an account's cookies or a residential proxy,
+// neither of which this deployment uses. Returns null for supported hosts.
+const unsupportedHosts: [string[], string][] = [
+  [['youtube.com', 'youtu.be'], 'YouTube'],
+  [['reddit.com', 'redd.it'], 'Reddit'],
+  [['vimeo.com'], 'Vimeo'],
+];
 export function unsupportedSource(value: string) {
   try {
     const h = new URL(value).hostname.toLowerCase();
-    if (h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtu.be')
-      return 'YouTube downloads are unavailable right now. Everything else — TikTok, Instagram, X, Facebook, Reddit and more — still works.';
+    for (const [domains, name] of unsupportedHosts)
+      if (domains.some((d) => h === d || h.endsWith('.' + d)))
+        return `${name} downloads are unavailable right now. TikTok, Instagram, X, Facebook, Twitch, Pinterest, SoundCloud and Dailymotion all still work.`;
     return null;
   } catch {
     return null;

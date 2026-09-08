@@ -32,10 +32,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-// YouTube is intentionally absent: it blocks downloads originating from
-// datacenter/VPS IP ranges, so advertising it here would only lead people
-// into a guaranteed failure. `unsupportedSource` in lib/media.ts explains
-// that to anyone who pastes a YouTube link anyway.
+// YouTube, Reddit and Vimeo are intentionally absent -- all three fail
+// from this deployment every time (see `unsupportedHosts` in lib/media.ts
+// for why), so listing them would only lead people into a guaranteed
+// failure. Anyone who pastes one of those links gets an explanation.
 export const platforms = [
   {
     name: 'TikTok',
@@ -50,7 +50,6 @@ export const platforms = [
     example: 'instagram.com/reel/…',
   },
   { name: 'X', slug: 'x', color: '#e2e8ee', example: 'x.com/creator/status/…' },
-  { name: 'Vimeo', slug: 'vimeo', color: '#69c7f1', example: 'vimeo.com/…' },
   {
     name: 'Facebook',
     slug: 'facebook',
@@ -62,12 +61,6 @@ export const platforms = [
     slug: 'twitch',
     color: '#b593ff',
     example: 'twitch.tv/videos/…',
-  },
-  {
-    name: 'Reddit',
-    slug: 'reddit',
-    color: '#ff956e',
-    example: 'reddit.com/r/…/comments/…',
   },
   {
     name: 'Pinterest',
