@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import './studio-design.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,7 +17,8 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   icons: { icon: '/favicon.svg', apple: '/favicon.svg' },
   title: 'Orbit — Your media, in your orbit',
-  description: 'A personal media workspace for smart video downloads, audio extraction, batch downloads, and watermark editing.',
+  description:
+    'A personal media workspace for smart video downloads, audio extraction, batch downloads, and watermark editing.',
 };
 
 export default function RootLayout({
