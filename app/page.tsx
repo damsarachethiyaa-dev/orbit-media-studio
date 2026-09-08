@@ -119,9 +119,18 @@ export default function Home() {
         localStorage.getItem('orbit-preferences') || 'null',
       );
       if (stored) {
+        const url = stored.url || connectionDefault.url;
         const c = {
-          url: stored.url || connectionDefault.url,
-          key: sessionStorage.getItem('orbit-key') || '',
+          url,
+          // The engine key only lives in sessionStorage (cleared when the
+          // browser/tab closes) so it isn't persisted long-term. But once
+          // any preferences are saved at all, this branch runs on every
+          // future visit too, and a fresh session has no key of its own —
+          // so restore the shipped default key when the visitor is (still)
+          // pointed at the shipped default engine, rather than going blank.
+          key:
+            sessionStorage.getItem('orbit-key') ||
+            (url === connectionDefault.url ? connectionDefault.key : ''),
         };
         setConnection(c);
         setDraft(c);
