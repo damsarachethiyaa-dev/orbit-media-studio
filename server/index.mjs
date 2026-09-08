@@ -4,9 +4,14 @@
 // Route map: POST /analyze, POST /download, POST /edit, POST /upload,
 // GET /jobs, GET/DELETE /jobs/:id, GET /jobs/:id/file, GET /health.
 import http from 'node:http';
+import { friendlyError } from './errors.mjs';
+import { normalizeMediaUrl, vimeoPlayerUrl } from '../lib/sources.mjs';
+import { sessionFileFor } from './sessions.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import {
+  chmodSync,
+  copyFileSync,
   createReadStream,
   createWriteStream,
   existsSync,
@@ -54,15 +59,8 @@ if (host !== '127.0.0.1' && host !== 'localhost' && key.length < 24)
     'A public engine requires an ORBIT_API_KEY of at least 24 characters.',
   );
 const proxy = await startEgressProxy();
-const cookies =
-  process.env.ORBIT_COOKIES_FILE && existsSync(process.env.ORBIT_COOKIES_FILE)
-    ? ['--cookies', process.env.ORBIT_COOKIES_FILE]
-    : [];
-// The bgutil-ytdlp-pot-provider companion container mints the "proof of
-// origin" tokens YouTube requires from server IPs; see docker-compose.yml.
-// Set ORBIT_POT_PROVIDER_URL='' to disable if not running that service.
-const potProviderUrl =
-  process.env.ORBIT_POT_PROVIDER_URL ?? 'http://bgutil-provider:4416';
+// Compose supplies the provider address. Local development can omit it.
+const potProviderUrl = process.env.ORBIT_POT_PROVIDER_URL || '';
 const botTokenHost = potProviderUrl ? new URL(potProviderUrl).hostname : '';
 const common = [
   '-m',
@@ -81,13 +79,11 @@ const common = [
   `node:${process.execPath}`,
   '--ffmpeg-location',
   ffmpeg,
-  ...cookies,
-  ...(potProviderUrl
-    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${potProviderUrl}`]
-    : []),
 ];
 // Discard stale temporary uploads from previous sessions; completed files remain.
 for (const name of readdirSync(media)) {
+  if (/^[a-f0-9-]{36}\.cookies\.txt$/.test(name))
+    unlinkSync(path.join(media, name));
   if (
     /^[a-f0-9-]{36}\.upload$/.test(name) &&
     Date.now() - statSync(path.join(media, name)).mtimeMs > 24 * 60 * 60 * 1000
@@ -137,41 +133,6 @@ const publicJob = (j) => ({
 // they cite command-line flags and link to wiki pages, which is noise to
 // someone using this as a website. Translate the ones users actually hit
 // into something actionable, and pass anything unrecognized through.
-const errorTranslations = [
-  [
-    /not a bot|sign in to confirm/i,
-    'This source is blocking downloads from this server right now. Other videos may still work; try again later or try a different link.',
-  ],
-  [
-    /only works when logged-in|cookies|authentication/i,
-    'This source requires a signed-in session to download, which this server does not have.',
-  ],
-  [
-    /private video|members-only|join this channel/i,
-    'This video is private or restricted to members, so it cannot be downloaded.',
-  ],
-  [
-    /video unavailable|has been removed|no longer available|404/i,
-    'This video is unavailable. It may have been removed, or the link may be wrong.',
-  ],
-  [
-    /age|confirm your age/i,
-    'This video is age-restricted and cannot be downloaded without a signed-in account.',
-  ],
-  [
-    /geo|not available in your country|blocked it in your country/i,
-    'This video is not available in the region where this server is located.',
-  ],
-  [
-    /live event|is live/i,
-    'Live streams cannot be downloaded. Try again once the stream has ended.',
-  ],
-];
-function friendlyError(raw) {
-  for (const [pattern, message] of errorTranslations)
-    if (pattern.test(raw)) return message;
-  return raw;
-}
 function run(command, args, { timeout = 90000, onOutput, jobId } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -219,34 +180,83 @@ function run(command, args, { timeout = 90000, onOutput, jobId } = {}) {
       children.delete(child);
       clearTimeout(timer);
       if (jobId) processes.delete(jobId);
-      code === 0
-        ? resolve({ output, error })
-        : reject(
-            new Error(
-              friendlyError(
-                error
-                  .replace(/\x1b\[[0-9;]*m/g, '')
-                  .split('\n')
-                  .filter((l) => l.startsWith('ERROR:'))
-                  .join(' ')
-                  .slice(0, 600) ||
-                  error.slice(-400) ||
-                  'Media processing stopped.',
-              ),
+      if (code === 0) resolve({ output, error });
+      else
+        reject(
+          new Error(
+            friendlyError(
+              error
+                .replace(
+                  new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g'),
+                  '',
+                )
+                .split('\n')
+                .filter((l) => l.startsWith('ERROR:'))
+                .join(' ')
+                .slice(0, 600) ||
+                error.slice(-400) ||
+                'Media processing stopped.',
             ),
-          );
+          ),
+        );
     });
   });
 }
+async function extract(value, args, options = {}) {
+  const session = sessionFileFor(value, process.env);
+  const temporary = session
+    ? path.join(media, randomUUID() + '.cookies.txt')
+    : null;
+  try {
+    if (temporary) {
+      copyFileSync(session, temporary);
+      chmodSync(temporary, 0o600);
+    }
+    const host = new URL(value).hostname;
+    const youtube =
+      host === 'youtu.be' ||
+      host === 'youtube.com' ||
+      host.endsWith('.youtube.com');
+    const providerArgs =
+      youtube && potProviderUrl
+        ? [
+            '--extractor-args',
+            `youtubepot-bgutilhttp:base_url=${potProviderUrl}`,
+            '--extractor-args',
+            'youtube:player_client=mweb,default',
+          ]
+        : [];
+    return await run(
+      python,
+      [
+        ...common,
+        ...providerArgs,
+        ...(temporary ? ['--cookies', temporary] : []),
+        ...args,
+        '--',
+        value,
+      ],
+      options,
+    );
+  } finally {
+    if (temporary && existsSync(temporary)) unlinkSync(temporary);
+  }
+}
 async function analyze(value) {
-  const url = validateUrl(value);
-  const { output } = await run(python, [
-    ...common,
-    '--dump-single-json',
-    '--skip-download',
-    '--',
-    url.href,
-  ]);
+  const original = validateUrl(value);
+  let url = validateUrl(normalizeMediaUrl(original.href));
+  const args = ['--dump-single-json', '--skip-download'];
+  let output;
+  try {
+    ({ output } = await extract(url.href, args, {
+      timeout: vimeoPlayerUrl(url.href) ? 40000 : 90000,
+    }));
+  } catch (error) {
+    const player = vimeoPlayerUrl(url.href);
+    if (!player) throw error;
+    url = validateUrl(player);
+    ({ output } = await extract(url.href, args, { timeout: 40000 }));
+  }
   const raw = JSON.parse(output);
   if (raw.is_live || raw.live_status === 'is_live')
     throw new Error('Live streams are not supported. Try a finished video.');
@@ -355,8 +365,10 @@ async function download(data) {
   const kind = data.kind === 'audio' ? 'audio' : 'video';
   if (kind === 'audio' && info.hasAudio === false)
     throw new Error('This source has no audio stream.');
+  // Height only applies to video; audio always takes the best available
+  // stream, so an audio request is allowed to omit it entirely.
   const height = data.height === 'best' ? 'best' : Number(data.height);
-  if (height !== 'best' && !info.heights.includes(height))
+  if (kind === 'video' && height !== 'best' && !info.heights.includes(height))
     throw new Error('Choose an available quality.');
   const job = makeJob(info.title, kind);
   job.sourceUrl = info.url;
@@ -367,16 +379,16 @@ async function download(data) {
         : height === 'best'
           ? 'bestvideo*+bestaudio/best'
           : `bestvideo*[height<=${height}]+bestaudio/best[height<=${height}]`;
-    await run(
-      python,
+    await extract(
+      info.url,
       [
-        ...common,
         '--newline',
         '--progress',
         '--progress-template',
         'download:ORBIT:%(progress._percent_str)s',
         '--max-filesize',
         '1G',
+        '--check-formats',
         '--hls-prefer-native',
         '--no-continue',
         '-f',
@@ -385,8 +397,6 @@ async function download(data) {
         'mp4',
         '-o',
         `${job.id}.source.%(ext)s`,
-        '--',
-        info.url,
       ],
       {
         timeout: 20 * 60 * 1000,

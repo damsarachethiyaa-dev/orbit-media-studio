@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- Polymorphic UI wrappers retain their ARIA group/list/slide semantics and div ref contract. */
 'use client';
 
 import { useMemo } from 'react';

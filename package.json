@@ -10,7 +10,7 @@
     "dev:full": "node server/dev.mjs",
     "engine": "node server/index.mjs",
     "setup:engine": "node server/setup.mjs",
-    "test:engine": "node --test server/network.test.mjs",
+    "test:engine": "node --test server/network.test.mjs server/errors.test.mjs server/sources.test.mjs server/media.test.mjs server/sessions.test.mjs",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",

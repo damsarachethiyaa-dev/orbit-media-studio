@@ -10,7 +10,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
-  CircleAlert,
   ArrowUpRight,
   AudioLines,
   Check,
@@ -52,7 +51,6 @@ import {
   api,
   connectionDefault,
   detectSource,
-  unsupportedSource,
   saveJob,
   type Connection,
   type Job,
@@ -100,13 +98,14 @@ export default function Home() {
   const awaitingSave = useRef<Set<string>>(new Set());
   const suppressAuto = useRef(false);
   const currentLink = useRef(link);
-  currentLink.current = link;
+  useEffect(() => {
+    currentLink.current = link;
+  }, [link]);
   const analyzeController = useRef<AbortController | null>(null);
   const analysisNumber = useRef(0);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const source = detectSource(link);
-  const unsupported = unsupportedSource(link);
   const activeJobs = jobs.filter((j) =>
     ['queued', 'processing'].includes(j.status),
   ).length;
@@ -141,6 +140,8 @@ export default function Home() {
             sessionStorage.getItem('orbit-key') ||
             (url === connectionDefault.url ? connectionDefault.key : ''),
         };
+        // Hydrate browser-only preferences after SSR.
+        // oxlint-disable-next-line react/react-compiler
         setConnection(c);
         setDraft(c);
         setAutoAnalyze(stored.autoAnalyze !== false);
@@ -181,6 +182,8 @@ export default function Home() {
   }, [connection]);
   useEffect(() => {
     if (!loaded) return;
+    // Subscribe to and fetch the external engine snapshot.
+    // oxlint-disable-next-line react/react-compiler
     void refresh();
     const timer = setInterval(() => void refresh(), activeJobs ? 2000 : 12000);
     return () => clearInterval(timer);
@@ -201,7 +204,7 @@ export default function Home() {
       for (const job of ready) {
         try {
           await saveJob(connection, job);
-          setNotice(`Saved “${job.title}” to your device.`);
+          setNotice(`Download started for “${job.title}”.`);
         } catch {
           setNotice('Your file is ready. Open your library to save it.');
         }
@@ -236,12 +239,6 @@ export default function Home() {
       setInfo(null);
       if (!detectSource(value)) {
         setError('Paste a complete http or https video link.');
-        setAnalyzing(false);
-        return null;
-      }
-      const unsupported = unsupportedSource(value);
-      if (unsupported) {
-        setError(unsupported);
         setAnalyzing(false);
         return null;
       }
@@ -527,12 +524,7 @@ export default function Home() {
                     </form>
                     <div className="download-actions">
                       <div className="detection-feedback">
-                        {unsupported ? (
-                          <>
-                            <CircleAlert size={14} />
-                            <span>{source} is not supported right now</span>
-                          </>
-                        ) : source ? (
+                        {source ? (
                           <>
                             <Check size={14} />
                             <span>{source} recognized</span>
@@ -559,7 +551,11 @@ export default function Home() {
                       </button>
                     </div>
                     {analyzing && (
-                      <div className="analyzing-state" role="status">
+                      <div
+                        className="analyzing-state"
+                        aria-live="polite"
+                        aria-atomic="true"
+                      >
                         <span className="scan-line" />
                         <LoaderCircle size={16} className="spin" />
                         Discovering available formats on {source}…
@@ -706,6 +702,7 @@ export default function Home() {
         </main>
       </div>
       <Tutorial
+        key={tutorial || 'closed'}
         open={tutorial !== null}
         initialLesson={tutorial || 'video'}
         onOpenChange={(open) => {
@@ -893,7 +890,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
       {notice && (
-        <div className="toast-notice" role="status">
+        <div className="toast-notice" aria-live="polite" aria-atomic="true">
           <Check size={17} />
           <span>{notice}</span>
           <button

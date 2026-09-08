@@ -2227,3 +2227,19 @@ html[data-motion='off'] .engine-status.online .status-dot:before,
 html[data-motion='off'] .progress-converting [data-slot='progress-indicator'] {
   animation: none !important;
 }
+
+.prepared-save {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-block: 1rem;
+}
+.prepared-save p {
+  overflow-wrap: anywhere;
+  margin-bottom: 0.75rem;
+}
+.prepared-save > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

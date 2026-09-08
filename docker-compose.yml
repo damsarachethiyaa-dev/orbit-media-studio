@@ -1,10 +1,7 @@
 services:
-  # Mints the "proof of origin" tokens YouTube now requires to prove a
-  # request came from a real client rather than a bot. Without this, most
-  # YouTube downloads fail with "Sign in to confirm you're not a bot" when
-  # run from a datacenter/VPS IP address. https://github.com/Brainicism/bgutil-ytdlp-pot-provider
+  # Optional YouTube token service; it does not guarantee access from blocked IPs.
   bgutil-provider:
-    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    image: brainicism/bgutil-ytdlp-pot-provider:2.0.0
     restart: unless-stopped
     init: true
 
@@ -17,9 +14,12 @@ services:
       - '4318'
     volumes:
       - orbit-media:/app/.media
+      - ./.secrets/cookies:/app/secrets/cookies:ro
     environment:
       ORBIT_API_KEY: ${ORBIT_API_KEY}
       ORBIT_ALLOWED_ORIGINS: ${ORBIT_ALLOWED_ORIGINS}
+      ORBIT_POT_PROVIDER_URL: http://bgutil-provider:4416
+      ORBIT_COOKIES_DIR: /app/secrets/cookies
     depends_on:
       - bgutil-provider
 

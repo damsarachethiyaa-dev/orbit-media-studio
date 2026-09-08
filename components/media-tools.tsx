@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlatformIcon } from '@/components/studio-shell';
@@ -34,7 +35,10 @@ import {
   api,
   bytes,
   duration,
-  saveJob,
+  prepareJob,
+  canShareFile,
+  downloadFile,
+  shareFile,
   type Connection,
   type Job,
   type MediaInfo,
@@ -111,6 +115,7 @@ export function MediaResult({
       <div className="result-summary">
         <div className="video-thumbnail">
           {info.thumbnail ? (
+            // oxlint-disable-next-line next/no-img-element -- Extractor thumbnails use arbitrary hosts; no image proxy is configured.
             <img
               src={info.thumbnail}
               alt=""
@@ -192,7 +197,21 @@ export function MediaResult({
     </div>
   );
 }
-export function JobList({
+// Remount pending file preparation when the selected engine changes.
+export function JobList(props: {
+  jobs: Job[];
+  connection: Connection;
+  onRefresh: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <JobListContent
+      key={props.connection.url + props.connection.key}
+      {...props}
+    />
+  );
+}
+function JobListContent({
   jobs,
   connection,
   onRefresh,
@@ -205,13 +224,26 @@ export function JobList({
 }) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState<string | null>(null);
+  const [prepared, setPrepared] = useState<{ job: Job; file: File } | null>(
+    null,
+  );
+  const saveRequest = useRef(0);
+  useEffect(
+    () => () => {
+      saveRequest.current++;
+    },
+    [connection],
+  );
   async function save(job: Job) {
+    const request = ++saveRequest.current;
+    setPrepared(null);
     setSaving(job.id);
     setError('');
     try {
-      // A tap on Save is a user gesture, so the share sheet is allowed here:
-      // on phones that's what puts the file into the gallery.
-      await saveJob(connection, job, true);
+      const file = await prepareJob(connection, job);
+      if (request !== saveRequest.current) return;
+      if (canShareFile(file)) setPrepared({ job, file });
+      else downloadFile(file);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -222,6 +254,7 @@ export function JobList({
     setError('');
     try {
       await api(connection, `/jobs/${job.id}`, { method: 'DELETE' });
+      if (prepared?.job.id === job.id) setPrepared(null);
       onRefresh();
     } catch (e) {
       setError((e as Error).message);
@@ -229,7 +262,45 @@ export function JobList({
   }
   return (
     <div className="job-list">
-      {error && <ErrorNotice message={error} />}{' '}
+      {error && <ErrorNotice message={error} />}
+      {prepared && (
+        <div className="prepared-save" aria-live="polite">
+          <p>
+            <strong>{prepared.job.title}</strong> is ready. Share to choose a
+            supported app or gallery, or download the file.
+          </p>
+          <div>
+            <Button
+              onClick={async () => {
+                setError('');
+                try {
+                  const result = await shareFile(
+                    prepared.file,
+                    prepared.job.title,
+                  );
+                  if (result === 'shared') setPrepared(null);
+                } catch (e) {
+                  setError((e as Error).message);
+                }
+              }}
+            >
+              Share file
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                downloadFile(prepared.file);
+                setPrepared(null);
+              }}
+            >
+              Download file
+            </Button>
+            <Button variant="ghost" onClick={() => setPrepared(null)}>
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
       {(compact ? jobs.slice(0, 3) : jobs).map((job) => (
         <div className="job-row" key={job.id}>
           <span className={'job-icon ' + job.kind}>
@@ -275,7 +346,7 @@ export function JobList({
               title="Save to your device"
               aria-label={`Save ${job.title} to your device`}
               onClick={() => save(job)}
-              disabled={saving === job.id}
+              disabled={saving !== null}
             >
               {saving === job.id ? (
                 <LoaderCircle size={18} className="spin" />
@@ -565,6 +636,8 @@ export function Studio({
   useEffect(() => {
     if (!file) return;
     const url = URL.createObjectURL(file);
+    // Object URL ownership follows the selected file and is released on cleanup.
+    // oxlint-disable-next-line react/react-compiler
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
@@ -676,6 +749,8 @@ export function Studio({
                 </button>
               </div>
               <div className="video-edit-frame">
+                {/* Uploaded editing previews have no caption track supplied by the source. */}
+                {/* oxlint-disable-next-line jsx-a11y/media-has-caption */}
                 <video
                   ref={video}
                   src={preview}
@@ -768,7 +843,7 @@ export function Studio({
         </div>
         <aside className="tool-panel studio-settings">
           <h3>Fine-tune your frame</h3>
-          <label className="field-label">Cleanup method</label>
+          <span className="field-label">Cleanup method</span>
           <Picker
             label="Cleanup method"
             value={method}

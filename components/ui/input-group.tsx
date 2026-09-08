@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- Polymorphic UI wrappers retain their ARIA group/list/slide semantics and div ref contract. */
 'use client';
 
 import * as React from 'react';
@@ -54,12 +55,6 @@ function InputGroupAddon({
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button')) {
-          return;
-        }
-        e.currentTarget.parentElement?.querySelector('input')?.focus();
-      }}
       {...props}
     />
   );

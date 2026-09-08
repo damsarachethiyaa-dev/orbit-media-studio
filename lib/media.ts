@@ -44,21 +44,18 @@ export async function api<T>(
   endpoint: string,
   init: RequestInit = {},
 ): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (typeof init.body === 'string' && !headers.has('Content-Type'))
+    headers.set('Content-Type', 'application/json');
+  if (connection.key && !headers.has('Authorization'))
+    headers.set('Authorization', 'Bearer ' + connection.key);
   let response;
   try {
     response = await fetch(
       connection.url.replace(/\/$/, '') + '/api' + endpoint,
       {
         ...init,
-        headers: {
-          ...(typeof init.body === 'string'
-            ? { 'Content-Type': 'application/json' }
-            : {}),
-          ...(connection.key
-            ? { Authorization: 'Bearer ' + connection.key }
-            : {}),
-          ...init.headers,
-        },
+        headers,
         signal:
           init.signal ||
           AbortSignal.timeout(endpoint === '/analyze' ? 95000 : 30000),
@@ -104,30 +101,6 @@ export function detectSource(value: string) {
     return null;
   }
 }
-// Sources verified to fail from this deployment every time, so the app can
-// say so immediately instead of sending a request that is certain to fail.
-// Each was confirmed by testing against the live engine:
-//   youtube  - blocks datacenter/VPS IP ranges outright
-//   reddit   - same; its session endpoint returns 403 from this IP
-//   vimeo    - now requires a signed-in session for virtually every video
-// Fixing any of these needs an account's cookies or a residential proxy,
-// neither of which this deployment uses. Returns null for supported hosts.
-const unsupportedHosts: [string[], string][] = [
-  [['youtube.com', 'youtu.be'], 'YouTube'],
-  [['reddit.com', 'redd.it'], 'Reddit'],
-  [['vimeo.com'], 'Vimeo'],
-];
-export function unsupportedSource(value: string) {
-  try {
-    const h = new URL(value).hostname.toLowerCase();
-    for (const [domains, name] of unsupportedHosts)
-      if (domains.some((d) => h === d || h.endsWith('.' + d)))
-        return `${name} downloads are unavailable right now. TikTok, Instagram, X, Facebook, Twitch, Pinterest, SoundCloud and Dailymotion all still work.`;
-    return null;
-  } catch {
-    return null;
-  }
-}
 export function duration(seconds: number) {
   if (!seconds) return 'Duration unavailable';
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
@@ -138,41 +111,10 @@ export function bytes(value?: number) {
     ? (value / 1024 ** 3).toFixed(1) + ' GB'
     : (value / 1024 ** 2).toFixed(1) + ' MB';
 }
-// `share` opens the device's native share sheet, which on a phone is the
-// only route into the photo gallery -- a web page cannot write there
-// directly. It requires a user gesture, so pass it for taps on Save and
-// leave it off for automatic saves, which fall back to a file download.
-export async function saveJob(connection: Connection, job: Job, share = false) {
-  const r = await fetch(
-    `${connection.url.replace(/\/$/, '')}/api/jobs/${job.id}/file`,
-    {
-      headers: connection.key
-        ? { Authorization: 'Bearer ' + connection.key }
-        : {},
-    },
-  );
-  if (!r.ok) throw new Error('This file is no longer available.');
-  const blob = await r.blob();
-  const name = job.filename || 'orbit-download.mp4';
-  if (share && typeof navigator.canShare === 'function') {
-    const file = new File([blob], name, {
-      type: blob.type || 'application/octet-stream',
-    });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: job.title });
-        return;
-      } catch (e) {
-        // Dismissing the sheet is a normal outcome, not a failure.
-        if ((e as Error).name === 'AbortError') return;
-        // Anything else (unsupported target, etc.) falls back to a download.
-      }
-    }
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-}
+export {
+  prepareJob,
+  canShareFile,
+  downloadFile,
+  shareFile,
+  saveJob,
+} from './files';

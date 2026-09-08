@@ -32,11 +32,21 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-// YouTube, Reddit and Vimeo are intentionally absent -- all three fail
-// from this deployment every time (see `unsupportedHosts` in lib/media.ts
-// for why), so listing them would only lead people into a guaranteed
-// failure. Anyone who pastes one of those links gets an explanation.
+// Recognition does not guarantee source availability or account access.
 export const platforms = [
+  {
+    name: 'YouTube',
+    slug: 'youtube',
+    color: '#ff5666',
+    example: 'youtube.com/watch?v=…',
+  },
+  { name: 'Vimeo', slug: 'vimeo', color: '#69c7f1', example: 'vimeo.com/…' },
+  {
+    name: 'Reddit',
+    slug: 'reddit',
+    color: '#ff956e',
+    example: 'reddit.com/r/…/comments/…',
+  },
   {
     name: 'TikTok',
     slug: 'tiktok',

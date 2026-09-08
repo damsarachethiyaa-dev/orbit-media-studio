@@ -42,3 +42,5 @@ next-env.d.ts
 /.tools/
 *.tsbuildinfo
 cookies.txt
+
+/.secrets/

@@ -445,13 +445,6 @@ export function Tutorial({
   const [lessonId, setLessonId] = useState(initialLesson);
   const [step, setStep] = useState(0);
   const [finished, setFinished] = useState(false);
-  useEffect(() => {
-    if (open) {
-      setLessonId(initialLesson);
-      setStep(0);
-      setFinished(false);
-    }
-  }, [open, initialLesson]);
   const lesson = lessons.find((l) => l.id === lessonId) || lessons[0];
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
