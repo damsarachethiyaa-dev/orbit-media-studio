@@ -1,8 +1,11 @@
 'use client';
+// The actual tool bodies: MediaResult (quality picker + "add to downloads"
+// for a just-analyzed link), JobList/History (the download queue/library),
+// Studio (watermark upload + region editor), and Batch (multi-link queue).
+// Each of these calls lib/media.ts's `api()` to talk to the engine.
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
-  ArrowUpRight,
   Check,
   CircleAlert,
   Clock3,
@@ -249,12 +252,15 @@ export function JobList({
               </span>
               <span className={'job-status ' + job.status}>
                 {job.status === 'processing'
-                  ? `Processing · ${Math.round(job.progress)}%`
+                  ? job.progress >= 89
+                    ? 'Converting your file…'
+                    : `Processing · ${Math.round(job.progress)}%`
                   : job.status}
               </span>
             </div>
             {['queued', 'processing'].includes(job.status) && (
               <Progress
+                className={job.progress >= 89 ? 'progress-converting' : ''}
                 aria-label={`${job.title} progress`}
                 value={job.status === 'queued' ? 0 : job.progress}
               />

@@ -1,27 +1,27 @@
 'use client';
 
+// Main page: the download workspace, plus the studio/batch/history/learn
+// views and the settings/help/tutorial dialogs. This owns almost all app
+// state (current link, analyzed video info, job list, connection settings)
+// and passes it down to components/studio-shell.tsx (navigation, hero,
+// platform dock) and components/media-tools.tsx (download/watermark/batch
+// tool bodies). components/orbit-experience.tsx holds the background canvas
+// animation and the tutorial/learning-center dialogs.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
   ArrowUpRight,
   AudioLines,
   Check,
-  ChevronRight,
-  CircleHelp,
   Clipboard,
   Clock3,
-  Download,
   Globe2,
-  Layers3,
   Link2,
   Orbit,
-  Settings2,
   ShieldCheck,
   Sparkles,
-  WandSparkles,
   Zap,
   LoaderCircle,
-  CircleAlert,
   Laptop,
   X,
   BookOpen,
@@ -627,14 +627,23 @@ export default function Home() {
           <footer className="workspace-footer">
             <span>
               <Orbit size={15} />
-              Orbit Media Studio<span className="footer-dot">·</span>Made for
-              your creative flow.
+              Orbit Media Studio<span className="footer-dot">·</span>Made by
+              Chethiya Rathnasekara
             </span>
-            <button onClick={() => navigate('learn')}>
-              <BookOpen size={14} />
-              How to use Orbit
-              <ArrowUpRight size={13} />
-            </button>
+            <span className="footer-links">
+              <a
+                href="https://github.com/damsarachethiyaa-dev"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+              <button onClick={() => navigate('learn')}>
+                <BookOpen size={14} />
+                How to use Orbit
+                <ArrowUpRight size={13} />
+              </button>
+            </span>
           </footer>
         </main>
       </div>

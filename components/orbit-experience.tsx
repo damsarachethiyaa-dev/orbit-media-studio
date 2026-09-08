@@ -1,4 +1,8 @@
 'use client';
+// SpaceAtmosphere: the fixed-position canvas starfield behind the whole app.
+// Tutorial: the step-by-step "how this tool works" dialog with mocked-up
+// demo screens (opened from "Quick tutorial" and the tool cards).
+// LearningCenter: the full-page "Learn" view with lesson cards and tips.
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
@@ -20,7 +24,6 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
-  Upload,
   WandSparkles,
   Zap,
 } from 'lucide-react';
@@ -32,7 +35,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
 
 export function SpaceAtmosphere({ enabled }: { enabled: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null);

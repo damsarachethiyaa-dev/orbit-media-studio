@@ -48,8 +48,15 @@ export default defineConfig(async () => {
     css: { postcss: { plugins: [tailwindcss()] } },
     server: {
       watch: {
-        ignored: ['**/.venv/**', '**/.tools/**', '**/.media/**', '**/outputs/**'],
-        ...(isCodexSeatbeltSandbox ? { useFsEvents: false, usePolling: true } : {}),
+        ignored: [
+          '**/.venv/**',
+          '**/.tools/**',
+          '**/.media/**',
+          '**/outputs/**',
+        ],
+        ...(isCodexSeatbeltSandbox
+          ? { useFsEvents: false, usePolling: true }
+          : {}),
       },
     },
     plugins: [

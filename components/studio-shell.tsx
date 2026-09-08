@@ -1,4 +1,9 @@
 'use client';
+// The app's "shell": sidebar navigation (StudioNavigation), the platform
+// list + brand icon renderer (platforms, PlatformIcon, PlatformDock), the
+// animated hero graphic (MediaConstellation), the "your creative flow"
+// sidebar (WorkflowPanel), and the three feature cards below the fold
+// (StudioTools). Used by app/page.tsx.
 import { useState } from 'react';
 import {
   ArrowDownToLine,
@@ -6,9 +11,7 @@ import {
   ArrowUpRight,
   AudioLines,
   BookOpen,
-  Check,
   ChevronDown,
-  ChevronRight,
   CircleHelp,
   Clock3,
   Globe2,

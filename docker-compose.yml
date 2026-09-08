@@ -1,0 +1,33 @@
+services:
+  orbit-engine:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    expose:
+      - '4318'
+    volumes:
+      - orbit-media:/app/.media
+    environment:
+      ORBIT_API_KEY: ${ORBIT_API_KEY}
+      ORBIT_ALLOWED_ORIGINS: ${ORBIT_ALLOWED_ORIGINS}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      ORBIT_DOMAIN: ${ORBIT_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - orbit-engine
+
+volumes:
+  orbit-media:
+  caddy-data:
+  caddy-config:

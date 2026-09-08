@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "orbit",
+      "runtimeExecutable": "C:\\Users\\LEGION\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe",
+      "runtimeArgs": ["server/dev.mjs"],
+      "port": 3000
+    }
+  ]
+}
