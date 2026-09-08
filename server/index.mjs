@@ -58,6 +58,12 @@ const cookies =
   process.env.ORBIT_COOKIES_FILE && existsSync(process.env.ORBIT_COOKIES_FILE)
     ? ['--cookies', process.env.ORBIT_COOKIES_FILE]
     : [];
+// The bgutil-ytdlp-pot-provider companion container mints the "proof of
+// origin" tokens YouTube requires from server IPs; see docker-compose.yml.
+// Set ORBIT_POT_PROVIDER_URL='' to disable if not running that service.
+const potProviderUrl =
+  process.env.ORBIT_POT_PROVIDER_URL ?? 'http://bgutil-provider:4416';
+const botTokenHost = potProviderUrl ? new URL(potProviderUrl).hostname : '';
 const common = [
   '-m',
   'yt_dlp',
@@ -76,6 +82,9 @@ const common = [
   '--ffmpeg-location',
   ffmpeg,
   ...cookies,
+  ...(potProviderUrl
+    ? ['--extractor-args', `youtubepot-bgutilhttp:base_url=${potProviderUrl}`]
+    : []),
 ];
 // Discard stale temporary uploads from previous sessions; completed files remain.
 for (const name of readdirSync(media)) {
@@ -134,7 +143,10 @@ function run(command, args, { timeout = 90000, onOutput, jobId } = {}) {
         HTTP_PROXY: proxy.url,
         HTTPS_PROXY: proxy.url,
         ALL_PROXY: proxy.url,
-        NO_PROXY: '',
+        // The bgutil PO-token provider is our own trusted internal service,
+        // not an extractor-controlled destination, so it's exempt from the
+        // SSRF-blocking egress proxy that everything else routes through.
+        NO_PROXY: botTokenHost,
       },
     });
     children.add(child);
