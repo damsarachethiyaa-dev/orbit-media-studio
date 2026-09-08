@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
+  CircleAlert,
   ArrowUpRight,
   AudioLines,
   Check,
@@ -51,6 +52,7 @@ import {
   api,
   connectionDefault,
   detectSource,
+  unsupportedSource,
   type Connection,
   type Job,
   type MediaInfo,
@@ -98,6 +100,7 @@ export default function Home() {
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const source = detectSource(link);
+  const unsupported = unsupportedSource(link);
   const activeJobs = jobs.filter((j) =>
     ['queued', 'processing'].includes(j.status),
   ).length;
@@ -198,6 +201,12 @@ export default function Home() {
       setInfo(null);
       if (!detectSource(value)) {
         setError('Paste a complete http or https video link.');
+        setAnalyzing(false);
+        return null;
+      }
+      const unsupported = unsupportedSource(value);
+      if (unsupported) {
+        setError(unsupported);
         setAnalyzing(false);
         return null;
       }
@@ -483,7 +492,12 @@ export default function Home() {
                     </form>
                     <div className="download-actions">
                       <div className="detection-feedback">
-                        {source ? (
+                        {unsupported ? (
+                          <>
+                            <CircleAlert size={14} />
+                            <span>{source} is not supported right now</span>
+                          </>
+                        ) : source ? (
                           <>
                             <Check size={14} />
                             <span>{source} recognized</span>

@@ -99,6 +99,21 @@ export function detectSource(value: string) {
     return null;
   }
 }
+// Sources that are known to fail from this deployment, so the app can say
+// so immediately instead of sending a request that is certain to fail.
+// YouTube blocks requests originating from datacenter/VPS IP ranges; the
+// only workarounds are an account's cookies or a residential proxy, and
+// this deployment uses neither. Returns null for anything supported.
+export function unsupportedSource(value: string) {
+  try {
+    const h = new URL(value).hostname.toLowerCase();
+    if (h === 'youtube.com' || h.endsWith('.youtube.com') || h === 'youtu.be')
+      return 'YouTube downloads are unavailable right now. Everything else — TikTok, Instagram, X, Facebook, Reddit and more — still works.';
+    return null;
+  } catch {
+    return null;
+  }
+}
 export function duration(seconds: number) {
   if (!seconds) return 'Duration unavailable';
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;

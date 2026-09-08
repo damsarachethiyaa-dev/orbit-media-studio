@@ -32,13 +32,11 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
+// YouTube is intentionally absent: it blocks downloads originating from
+// datacenter/VPS IP ranges, so advertising it here would only lead people
+// into a guaranteed failure. `unsupportedSource` in lib/media.ts explains
+// that to anyone who pastes a YouTube link anyway.
 export const platforms = [
-  {
-    name: 'YouTube',
-    slug: 'youtube',
-    color: '#ff5666',
-    example: 'youtube.com/watch?v=…',
-  },
   {
     name: 'TikTok',
     slug: 'tiktok',
@@ -230,7 +228,7 @@ export function PlatformDock({
         </span>
       </div>
       <div className="source-grid">
-        {platforms.slice(0, expanded ? 11 : 6).map((p) => (
+        {platforms.slice(0, expanded ? platforms.length : 6).map((p) => (
           <button
             className={
               'source-tile ' + (selected === p.name ? 'is-selected' : '')
