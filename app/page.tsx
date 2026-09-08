@@ -176,9 +176,29 @@ export default function Home() {
       });
       setConnected(health.ok);
       if (health.ok) setJobs(await api<Job[]>(connection, '/jobs'));
-    } catch {
-      setConnected(false);
+      return;
+    } catch {}
+    // A saved engine address outlives the deployment that suggested it. Early
+    // builds shipped a localhost default, so a browser that visited back then
+    // is pinned to an address that answers on a laptop and never on a phone,
+    // with no way out except editing Preferences by hand. If the saved engine
+    // is unreachable and this build ships a different one, adopt that instead.
+    if (connection.url !== connectionDefault.url) {
+      try {
+        const fallback = await api<{ ok: boolean }>(
+          connectionDefault,
+          '/health',
+          { signal: AbortSignal.timeout(5000) },
+        );
+        if (fallback.ok) {
+          setConnection(connectionDefault);
+          setDraft(connectionDefault);
+          setConnected(true);
+          return;
+        }
+      } catch {}
     }
+    setConnected(false);
   }, [connection]);
   useEffect(() => {
     if (!loaded) return;
