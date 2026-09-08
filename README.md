@@ -37,7 +37,7 @@ Use a server/container capable of running FFmpeg, with sufficient disk space and
 | `ORBIT_PYTHON` | Optional Python executable override. |
 | `ORBIT_FFMPEG` | Optional FFmpeg executable override. |
 
-Example allowed origin for this project: `https://orbit-media-studio.regal-guppy-8422.chatgpt.site`. Never put API keys in source files. Store engine data on a persistent volume. This engine is designed for one personal workspace; a public multiuser product also needs separate user accounts, per-user storage/queues, distributed job processing, quotas, cleanup policies, and operational monitoring.
+Example allowed origin for this project: `https://orbit-media-studio.chethiya-730.chatgpt.site`. Never put API keys in source files. Store engine data on a persistent volume. This engine is designed for one personal workspace; a public multiuser product also needs separate user accounts, per-user storage/queues, distributed job processing, quotas, cleanup policies, and operational monitoring.
 
 ## Capabilities and limits
 
