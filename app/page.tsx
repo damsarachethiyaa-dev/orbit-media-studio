@@ -92,9 +92,10 @@ export default function Home() {
   const [motion, setMotion] = useState(true);
   const [notice, setNotice] = useState('');
   const [loaded, setLoaded] = useState(false);
-  // Jobs seen mid-flight this session. Only these auto-save on completion,
-  // so opening the page with a finished library doesn't dump every old
-  // download into the browser at once.
+  // Jobs this browser queued itself, and only those, auto-save when they
+  // finish. The engine's queue is shared, so every device with the page open
+  // sees every job -- without this, a download started on a phone would also
+  // land in the downloads folder of a laptop that merely had the tab open.
   const awaitingSave = useRef<Set<string>>(new Set());
   const suppressAuto = useRef(false);
   const currentLink = useRef(link);
@@ -213,9 +214,7 @@ export default function Home() {
   useEffect(() => {
     const ready: Job[] = [];
     for (const job of jobs)
-      if (['queued', 'processing'].includes(job.status))
-        awaitingSave.current.add(job.id);
-      else if (job.status === 'completed' && awaitingSave.current.has(job.id)) {
+      if (job.status === 'completed' && awaitingSave.current.has(job.id)) {
         awaitingSave.current.delete(job.id);
         ready.push(job);
       }
@@ -244,6 +243,9 @@ export default function Home() {
   }
   const onJob = useCallback(
     (job: Job) => {
+      // Queueing here is the only proof this browser asked for the file, so
+      // it is also the only thing that may auto-save it later.
+      awaitingSave.current.add(job.id);
       setJobs((j) => [job, ...j.filter((x) => x.id !== job.id)]);
       setNotice('Added to your download queue.');
       void refresh();
