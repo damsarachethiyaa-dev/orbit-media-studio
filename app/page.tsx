@@ -20,7 +20,6 @@ import {
   Orbit,
   ShieldCheck,
   Sparkles,
-  Zap,
   LoaderCircle,
   Laptop,
   X,
@@ -79,14 +78,11 @@ export default function Home() {
   const [view, setView] = useState('download');
   const [dialog, setDialog] = useState<'settings' | 'help' | null>(null);
   const [connection, setConnection] = useState<Connection>(connectionDefault);
-  const [draft, setDraft] = useState<Connection>(connectionDefault);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [info, setInfo] = useState<MediaInfo | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
-  const [settingsError, setSettingsError] = useState('');
-  const [checking, setChecking] = useState(false);
   const [autoAnalyze, setAutoAnalyze] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [motion, setMotion] = useState(true);
@@ -144,7 +140,6 @@ export default function Home() {
         // Hydrate browser-only preferences after SSR.
         // oxlint-disable-next-line react/react-compiler
         setConnection(c);
-        setDraft(c);
         setAutoAnalyze(stored.autoAnalyze !== false);
         setAutoSave(stored.autoSave !== false);
         setMotion(stored.motion !== false);
@@ -193,7 +188,6 @@ export default function Home() {
         );
         if (fallback.ok) {
           setConnection(connectionDefault);
-          setDraft(connectionDefault);
           setConnected(true);
           return;
         }
@@ -344,40 +338,7 @@ export default function Home() {
       inputRef.current?.focus();
     }
   }
-  async function connect() {
-    setChecking(true);
-    setSettingsError('');
-    try {
-      const u = new URL(draft.url);
-      if (
-        !['http:', 'https:'].includes(u.protocol) ||
-        u.username ||
-        u.password ||
-        u.search ||
-        u.hash
-      )
-        throw new Error('Use a valid engine URL without embedded credentials.');
-      const c = { url: draft.url.replace(/\/$/, ''), key: draft.key };
-      const r = await api<{ ok: boolean }>(c, '/health', {
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!r.ok)
-        throw new Error(
-          'The engine is running but its media tools need setup.',
-        );
-      setConnection(c);
-      setConnected(true);
-      setNotice('Media engine connected.');
-      setDialog(null);
-    } catch (e) {
-      setSettingsError((e as Error).message);
-    } finally {
-      setChecking(false);
-    }
-  }
   function settings() {
-    setDraft(connection);
-    setSettingsError('');
     setDialog('settings');
   }
 
@@ -747,7 +708,7 @@ export default function Home() {
             </DialogTitle>
             <DialogDescription>
               {dialog === 'settings'
-                ? 'Connect your media engine and set your workspace preferences.'
+                ? 'Set your workspace preferences.'
                 : 'A few things to help you keep your creative flow.'}
             </DialogDescription>
           </DialogHeader>
@@ -787,49 +748,10 @@ export default function Home() {
                 />
               </div>
               <div className="settings-divider" />
-              <label className="field-label" htmlFor="engine-url">
-                Media engine URL
-              </label>
-              <input
-                id="engine-url"
-                className="settings-input"
-                value={draft.url}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, url: e.target.value }))
-                }
-                placeholder="http://127.0.0.1:4318"
-              />
-              <label className="field-label" htmlFor="engine-key">
-                Engine key <span>· if configured</span>
-              </label>
-              <input
-                id="engine-key"
-                type="password"
-                className="settings-input"
-                value={draft.key}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, key: e.target.value }))
-                }
-                autoComplete="off"
-              />
               <p className="tool-footnote">
-                The media engine handles downloads and video processing. Use the
-                engine running on your computer, or connect your own hosted
-                engine. Your key stays in this browser session.
+                The media engine handles downloads and video processing. It’s
+                connected automatically — there’s nothing to set up.
               </p>
-              {settingsError && <ErrorNotice message={settingsError} />}
-              <button
-                className="primary-button"
-                onClick={connect}
-                disabled={checking}
-              >
-                {checking ? (
-                  <LoaderCircle size={16} className="spin" />
-                ) : (
-                  <Zap size={16} />
-                )}{' '}
-                {checking ? 'Connecting…' : 'Save & connect'}
-              </button>
               <p className="install-tip">
                 <Laptop size={16} />
                 Install Orbit using your browser’s “Install app” or “Add to Home

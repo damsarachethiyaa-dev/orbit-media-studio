@@ -157,7 +157,7 @@ export const lessons = [
     steps: [
       {
         title: 'Connect your media engine',
-        body: 'Start Orbit on your computer using Start-Orbit.cmd. Look for “Engine connected” at the top of the workspace. If it is disconnected, open Preferences and choose Save & connect.',
+        body: 'Orbit connects to its media engine automatically. Look for “Connected” at the top of the workspace; if it says something else, give it a moment to reconnect.',
         action: 'Engine is connected',
         hint: 'The local engine creates the video files. Keep its launch window open.',
       },
