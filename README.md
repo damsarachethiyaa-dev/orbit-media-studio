@@ -1,8 +1,14 @@
-# Orbit Media Studio
+# 🌌 Orbit Media Studio
 
-Made by [Chethiya Rathnasekara](https://github.com/damsarachethiyaa-dev).
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![FFmpeg](https://img.shields.io/badge/Media-FFmpeg%20%7C%20yt--dlp-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8?logo=pwa&logoColor=white)](https://github.com/damsarachethiyaa-dev/orbit-media-studio)
 
-A Galaxy-inspired media workspace with a responsive website and installable PWA. Includes automatic source recognition, source-derived video qualities, MP4 downloads, MP3 extraction, batch queues, persistent engine history, cancellation, and a region-based watermark editor (FFmpeg delogo or blur).
+> **Created by [Chethiya Rathnasekara](https://github.com/damsarachethiyaa-dev)**  
+> *A Galaxy-inspired media workspace with a responsive web dashboard and installable PWA. Includes automatic source recognition, source-derived video qualities, MP4 downloads, MP3 extraction, batch queues, persistent engine history, and region-based watermark studio.*
 
 ## Features
 
